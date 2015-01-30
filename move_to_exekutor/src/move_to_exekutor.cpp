@@ -24,6 +24,16 @@ MoveToExekutor::~MoveToExekutor()
 
 void MoveToExekutor::actionThread()
 {
+	double old_xy_tolerance_max;
+	double old_xy_tolerance_min;
+	double old_yaw_tolerance;
+	std::string old_driving_direction;
+
+	nh_.getParam("move_base/yaw_tolerance", old_yaw_tolerance);
+	nh_.getParam("move_base/xy_tolerance_max", old_xy_tolerance_max);
+	nh_.getParam("move_base/xy_tolerance_min", old_xy_tolerance_min);
+	nh_.getParam("move_base/driving_direction", old_driving_direction);
+
 	ROS_INFO("MoveToExekutor has started!");
 	setState(RUNNING);
 
@@ -41,8 +51,16 @@ void MoveToExekutor::actionThread()
 		return;
 	}
 
-	if(cmd_args > 5)
-		ROS_WARN("Too many parameters. This can lead to unpredictable results.");
+	if(cmd_args == 2)
+	{
+		if(nh_.hasParam("move_base/yaw_tolerance"))
+		{
+			ROS_INFO("\nA goal yaw was not specified.");
+			/* The third (optional) argument is the required orientation
+			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
+			nh_.setParam("move_base/yaw_tolerance", 3.14);
+		}
+	}
 
 	/* *******************************************************************************************************
 	 * /move_base/TrajectoryPlannerROS/xy_goal_tolerance ---> This controls the tolerance in the position
@@ -50,44 +68,38 @@ void MoveToExekutor::actionThread()
 	 *
 	 * /move_base/TrajectoryPlannerROS/yaw_goal_tolerance ---> This controls the tolerance in the orientation.
 	 * ******************************************************************************************************* */
-	if(cmd_args == 4)
+	if(cmd_args >= 4)
 	{
-		if (nh_.hasParam("/move_base/TrajectoryPlannerROS/xy_goal_tolerance"))
+		if (nh_.hasParam("move_base/xy_tolerance_max") && nh_.hasParam("move_base/xy_tolerance_min"))
 		{
-			ROS_INFO("\n The required parameter for position tolerance was found and is being set.");
-			/* The fourth (optional) argument is the tolerance on the position.
-			 * We are setting it here */
-			nh_.setParam("/move_base/TrajectoryPlannerROS/xy_goal_tolerance", the_values[3]);
-		}
-	}
-	if(cmd_args == 2)
-	{
-		if(nh_.hasParam("/move_base/TrajectoryPlannerROS/yaw_goal_tolerance"))
-		{
-			ROS_INFO("\n The required parameter for orientation tolerance was found and is being set. Note: This means a goal yaw was not specified.");
-			/* The third (optional) argument is the required orientation
-			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
-			nh_.setParam("/move_base/TrajectoryPlannerROS/yaw_goal_tolerance", 3.14);
-		}
-	}
-	if(cmd_args == 5)
-	{
-		if (nh_.hasParam("/move_base/TrajectoryPlannerROS/xy_goal_tolerance"))
-		{
-			ROS_INFO("\n The required parameter for position tolerance was found and is being set.");
-			/* The fourth (optional) argument is the tolerance on the position.
-			 * We are setting it here */
-			nh_.setParam("/move_base/TrajectoryPlannerROS/xy_goal_tolerance", the_values[3]);
-		}
 
-		if(nh_.hasParam("/move_base/TrajectoryPlannerROS/yaw_goal_tolerance"))
-		{
-			ROS_INFO("\n The required parameter for orientation tolerance was found and is being set. Note: This means a goal yaw was not specified.");
-			/* The third (optional) argument is the required orientation
-			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
-			nh_.setParam("/move_base/TrajectoryPlannerROS/yaw_goal_tolerance", the_values[4]);
+			ROS_INFO("\n The required parameter for position tolerance was found and is being set.");
+			/* The fourth (optional) argument is the tolerance on the position.
+			 * We are setting it here */
+			nh_.setParam("move_base/xy_tolerance_min", the_values[3]);
+			nh_.setParam("move_base/xy_tolerance_max", the_values[3] + 0.5);
 		}
 	}
+
+	if(cmd_args >= 5)
+	{
+		if(nh_.hasParam("move_base/yaw_tolerance"))
+		{
+			ROS_INFO("(((YAW TOLERANCE))): %lf", the_values[4]);
+			/* The third (optional) argument is the required orientation
+			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
+			nh_.setParam("move_base/yaw_tolerance", the_values[4]);
+		}
+	}
+	if(cmd_args >= 6)
+	{
+		std::string driving_dir = the_values[5] == -1.0 ? "backward": "forward";
+		ROS_INFO("(((DRIVING DIRECTION))): %s", driving_dir.c_str());
+		nh_.getParam("move_base/driving_direction", driving_dir);
+	}
+
+	if(cmd_args > 6)
+		ROS_WARN("Too many parameters. This can lead to unpredictable results.");
 
 	/* CODE FOR EXECUTING THE FUNCTION SHOULD GO HERE */
 	/* A variable for the goal */
@@ -109,9 +121,6 @@ void MoveToExekutor::actionThread()
 		the_goal.target_pose.pose.orientation.z = 0.0;
 	}
 
-	ROS_INFO("Orientation (%f,%f)", the_goal.target_pose.pose.orientation.w,
-			the_goal.target_pose.pose.orientation.z);
-
 	mb_client_.waitForServer();
 	ROS_INFO("Sending goal.");
 
@@ -131,6 +140,14 @@ void MoveToExekutor::actionThread()
 		setState(FAILED);
 		sleep(1);
 	}
+
+	// SET OLD PARAMETERS BACK.
+
+	nh_.setParam("move_base/yaw_tolerance", old_yaw_tolerance);
+	nh_.setParam("move_base/xy_tolerance_max", old_xy_tolerance_max);
+	nh_.setParam("move_base/xy_tolerance_min", old_xy_tolerance_min);
+	nh_.setParam("move_base/driving_direction", old_driving_direction);
+
 
 }
 }

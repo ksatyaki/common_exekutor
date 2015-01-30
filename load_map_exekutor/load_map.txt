@@ -1,0 +1,4 @@
+FLOOR1 --- /localhome/demo/catkin_ws/src/robotera_rep/robot_common/maps_domocasa/corridor-global-map 11.78 -0.68 -0.89
+FLOOR0 --- /localhome/demo/catkin_ws/src/robotera_rep/robot_common/maps_domocasa/ground_floor -1.6 2.32 3.14
+DOMOCASA --- /localhome/demo/catkin_ws/src/robotera_rep/robot_common/maps_domocasa/domocasa-global-map 0.0 0.0 0.0
+
