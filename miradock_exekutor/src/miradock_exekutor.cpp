@@ -28,9 +28,10 @@ MiradockExekutor::MiradockExekutor(std::string robot_name, std::string action_na
 	char buffer[500];
 	while(f.getline(buffer, 500))
 	{
-		if(strlen(buffer) == 0)
-			break;
 		std::string buf = buffer;
+
+		if(strlen(buffer) == 0 || buf.find_first_of(" --- ") == std::string::npos)
+			break;
 
 		station_ids_and_numbers_.insert (
 				std::pair<std::string, int> (

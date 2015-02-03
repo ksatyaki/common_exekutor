@@ -25,7 +25,7 @@ int main(int argn, char* args[])
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTSTP, &sa, NULL);
 
-	exekutor::MiradockExekutor miradock_exek ("coro", "miradock");
+	exekutor::MiradockExekutor miradock_exek ("coro", "miradock","/home/ace/docking_stations.txt");
 	miradock_exek.waitForLink();
 
 	return 0;
