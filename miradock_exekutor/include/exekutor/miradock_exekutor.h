@@ -11,7 +11,9 @@
 #include <exekutor/action_exekutor.h>
 #include <cognidrive_ros/Dock.h>
 #include <cstdlib>
+#include <string>
 #include <std_msgs/String.h>
+#include <fstream>
 
 
 namespace exekutor
@@ -52,12 +54,17 @@ class MiradockExekutor: public ActionExekutor
 	int last_docked_station_number_;
 
 	/**
+	 * A Hashmap of docking stations and the relevant names.
+	 */
+	std::map <std::string, int> station_ids_and_numbers_;
+
+	/**
 	 * A variable that keeps track of what the last operation was.
 	 */
 	Operation last_operation_;
 
 public:
-	MiradockExekutor(std::string robot_name, std::string action_name);
+	MiradockExekutor(std::string robot_name, std::string action_name, std::string docking_stations_filename = "/localhome/demo/docking_stations.txt");
 	virtual ~MiradockExekutor();
 };
 

@@ -10,7 +10,7 @@
 namespace exekutor {
 
 
-MiradockExekutor::MiradockExekutor(std::string robot_name, std::string action_name) :
+MiradockExekutor::MiradockExekutor(std::string robot_name, std::string action_name, std::string docking_stations_filename) :
 			ActionExekutor (robot_name, action_name)
 {
 	docking_client_ = nh_.serviceClient <cognidrive_ros::Dock> ("Dock");
@@ -18,6 +18,35 @@ MiradockExekutor::MiradockExekutor(std::string robot_name, std::string action_na
 
 	last_operation_ = UNDOCK;
 	last_docked_station_number_ = 1;
+
+	std::fstream f (docking_stations_filename.c_str());
+	if(!f)
+	{
+		ROS_INFO("Couldn't open the file: %s", docking_stations_filename.c_str());
+		exit(-1);
+	}
+	char buffer[500];
+	while(f.getline(buffer, 500))
+	{
+		if(strlen(buffer) == 0)
+			break;
+		std::string buf = buffer;
+
+		station_ids_and_numbers_.insert (
+				std::pair<std::string, int> (
+				buf.substr(0, buf.find_first_of(" --- ")),
+				atoi( buf.substr(buf.find_first_of(" --- ") + std::string(" --- ").length()).c_str() )
+			)
+		);
+	}
+
+	ROS_INFO("***********************************");
+	for(std::map<std::string, int>::iterator iter = station_ids_and_numbers_.begin(); iter != station_ids_and_numbers_.end(); iter++)
+	{
+		ROS_INFO("ID: %s, STATION NUMBER: %d",  iter->first.c_str(), iter->second);
+	}
+	ROS_INFO("***********************************");
+
 }
 
 void MiradockExekutor::dockingStatusCallback(const std_msgs::String::ConstPtr& rollerStatus)
@@ -46,8 +75,8 @@ void MiradockExekutor::actionThread()
 	else
 	{
 		message.request.type = cognidrive_ros::Dock::Request::DOCK;
-		ROS_INFO("Docking to station no. %d", std::atoi(stationString.c_str()));
-		message.request.ID_station = std::atoi(stationString.c_str());
+		ROS_INFO("Docking to station no. %d", atoi(stationString.c_str()));
+		message.request.ID_station = station_ids_and_numbers_[stationString.c_str()];
 	}
 
 	if(docking_client_.call(message))

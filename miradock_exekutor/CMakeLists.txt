@@ -61,3 +61,5 @@ target_link_libraries(test_miradock
   miradock_exekutor
   peiskernel_mt
 )
+
+install (FILES docking_stations.txt DESTINATION "~")

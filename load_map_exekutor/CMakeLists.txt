@@ -54,3 +54,5 @@ target_link_libraries (test_load_map
     load_map_exekutor
     peiskernel_mt
 )
+
+install(FILES load_map.txt DESTINATION "~")
