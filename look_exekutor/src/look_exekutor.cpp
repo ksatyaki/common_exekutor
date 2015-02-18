@@ -82,7 +82,7 @@ void LookExekutor::actionThread()
 
 	sensor_msgs::JointState ptu_cmd_msg_;
 	ptu_cmd_msg_.position.push_back(reqd_pan);
-	ptu_cmd_msg_.position.push_back(reqd_tilt);
+	ptu_cmd_msg_.position.push_back(-1*reqd_tilt);
 
 	ptu_cmd_msg_.velocity.push_back(0.5 * 180 / PI);
 	ptu_cmd_msg_.velocity.push_back(0.5 * 180 / PI);
