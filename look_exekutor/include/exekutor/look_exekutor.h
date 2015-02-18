@@ -20,6 +20,7 @@
 #include <geometry_msgs/PointStamped.h>
 #include <ptu_control/PtuGotoAction.h>
 #include <math.h>
+#include <sensor_msgs/JointState.h>
 
 #define PI 3.14159265359
 
@@ -28,6 +29,7 @@ namespace exekutor {
 class LookExekutor: public ActionExekutor
 {
 
+	ros::Publisher ptu_cmd_pub_;
 	/**
 	 * Action client to talk to the ptu action server.
 	 */
