@@ -44,7 +44,7 @@ void LookExekutor::actionThread()
 
 	float x__ =  obj_position.point.x + 0.17;
 
-	double reqd_tilt = asin((1.40 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
+	double reqd_tilt = asin((1.405 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
 	double reqd_pan = atan2(obj_position.point.y, x__);
 
 	ROS_INFO("Required pan = %lf", reqd_pan);
