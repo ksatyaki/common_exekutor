@@ -39,7 +39,21 @@ void MoveToExekutor::actionThread()
 
 	PeisTuple paramTuple = getParamTuple();
 
-	std::vector<double> the_values = extractParams(paramTuple.data);
+	std::vector <std::string>  params = extractParamStrings(paramTuple.data);
+	std::vector<double> the_values;
+
+	if(params.size() == 1)
+	{
+		geometry_msgs::PointStamped object_location = cam_interface::getObjectPositionFromCAM(params[0], tf_listener_);
+		the_values.push_back(object_location.point.x);
+		the_values.push_back(object_location.point.y);
+		the_values.push_back(1.0);
+		the_values.push_back(0.8);
+		the_values.push_back(3.14);
+	}
+
+	else
+		the_values = extractParams(paramTuple.data);
 
 	int cmd_args = the_values.size();
 

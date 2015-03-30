@@ -9,6 +9,8 @@
 #define MOVE_TO_EXEKUTOR_H_
 
 #include "exekutor/action_exekutor.h"
+#include "cam_interface/cam_interface.h"
+#include <geometry_msgs/PointStamped.h>
 
 /* The actionThread function uses these headers - ROS*/
 #include <move_base_msgs/MoveBaseAction.h>
