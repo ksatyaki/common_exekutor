@@ -51,6 +51,9 @@ void LookExekutor::actionThread()
 	ROS_INFO("Required pan = %lf", reqd_pan);
 	ROS_INFO("Required tilt = %lf", reqd_tilt);
 
+	if(reqd_pan < -0.85)
+	  reqd_pan = -0.85;
+
 	/*
  	ptu_control::PtuGotoGoal ptu_goal;
 	ptu_goal.pan = reqd_pan * 180 / PI;
