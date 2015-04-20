@@ -47,6 +47,8 @@ void MoveToExekutor::actionThread()
 	double old_yaw_tolerance;
 	std::string old_driving_direction;
 
+	bool base_link_target = false;
+
 	nh_.getParam("move_base/yaw_tolerance", old_yaw_tolerance);
 	nh_.getParam("move_base/xy_tolerance_max", old_xy_tolerance_max);
 	nh_.getParam("move_base/xy_tolerance_min", old_xy_tolerance_min);
@@ -67,6 +69,8 @@ void MoveToExekutor::actionThread()
 		the_values.push_back(object_location.point.x);
 		the_values.push_back(object_location.point.y);
 		the_values.push_back(object_location.point.z); // This is in fact a heading and not a z co-ordinate.
+
+		base_link_target = true;
 //		the_values.push_back(1.0);
 //		the_values.push_back(3.14);
 	}
@@ -138,7 +142,7 @@ void MoveToExekutor::actionThread()
 	/* CODE FOR EXECUTING THE FUNCTION SHOULD GO HERE */
 	/* A variable for the goal */
 	move_base_msgs::MoveBaseGoal the_goal;
-	the_goal.target_pose.header.frame_id = "map";
+	the_goal.target_pose.header.frame_id = base_link_target? "base_link" : "map";
 	the_goal.target_pose.header.stamp = ros::Time::now();
 
 	the_goal.target_pose.pose.position.x = the_values[0];
