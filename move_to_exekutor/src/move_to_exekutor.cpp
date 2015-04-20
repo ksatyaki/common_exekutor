@@ -62,12 +62,13 @@ void MoveToExekutor::actionThread()
 
 	if(params.size() == 1)
 	{
-		geometry_msgs::PointStamped object_location = cam_interface::getObjectPositionFromCAM(params[0], tf_listener_);
+//		geometry_msgs::PointStamped object_location = cam_interface::getObjectPositionFromCAM(params[0], tf_listener_);
+		geometry_msgs::PointStamped object_location = cam_interface::getObjectReachablePositionFromCAM(params[0], tf_listener_);
 		the_values.push_back(object_location.point.x);
 		the_values.push_back(object_location.point.y);
-		the_values.push_back(1.0);
-		the_values.push_back(0.8);
-		the_values.push_back(3.14);
+		the_values.push_back(object_location.point.z); // This is in fact a heading and not a z co-ordinate.
+//		the_values.push_back(1.0);
+//		the_values.push_back(3.14);
 	}
 
 	else
@@ -78,7 +79,7 @@ void MoveToExekutor::actionThread()
 	/* Small notifier in case the parameters are scanty or superfluous. */
 	if(cmd_args < 2)
 	{
-		ROS_ERROR("The parameters are too few. At least x and y are required. Aborting action...");
+		//ROS_ERROR("The parameters are too few. At least x and y are required. Aborting action...");
 		setState(FAILED);
 		return;
 	}
@@ -87,7 +88,7 @@ void MoveToExekutor::actionThread()
 	{
 		if(nh_.hasParam("move_base/yaw_tolerance"))
 		{
-			ROS_INFO("\nA goal yaw was not specified.");
+			//ROS_INFO("\nA goal yaw was not specified.");
 			/* The third (optional) argument is the required orientation
 			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
 			nh_.setParam("move_base/yaw_tolerance", 3.14);
@@ -105,9 +106,10 @@ void MoveToExekutor::actionThread()
 		if (nh_.hasParam("move_base/xy_tolerance_max") && nh_.hasParam("move_base/xy_tolerance_min"))
 		{
 
-			ROS_INFO("\n The required parameter for position tolerance was found and is being set.");
+			//ROS_INFO("\n The required parameter for position tolerance was found and is being set.");
 			/* The fourth (optional) argument is the tolerance on the position.
 			 * We are setting it here */
+			ROS_INFO("XY TOLERANCE: %lf", the_values[3]);
 			nh_.setParam("move_base/xy_tolerance_min", the_values[3]);
 			nh_.setParam("move_base/xy_tolerance_max", the_values[3] + 0.5);
 		}
@@ -117,7 +119,7 @@ void MoveToExekutor::actionThread()
 	{
 		if(nh_.hasParam("move_base/yaw_tolerance"))
 		{
-			ROS_INFO("(((YAW TOLERANCE))): %lf", the_values[4]);
+			ROS_INFO("YAW TOLERANCE: %lf", the_values[4]);
 			/* The third (optional) argument is the required orientation
 			 * In case it is not provided, we assume that we have no tolerance on the orientation.*/
 			nh_.setParam("move_base/yaw_tolerance", the_values[4]);
@@ -126,7 +128,7 @@ void MoveToExekutor::actionThread()
 	if(cmd_args >= 6)
 	{
 		std::string driving_dir = the_values[5] == -1.0 ? "backward": "forward";
-		ROS_INFO("(((DRIVING DIRECTION))): %s", driving_dir.c_str());
+		ROS_INFO("DRIVING DIRECTION: %s", driving_dir.c_str());
 		nh_.getParam("move_base/driving_direction", driving_dir);
 	}
 
@@ -142,8 +144,11 @@ void MoveToExekutor::actionThread()
 	the_goal.target_pose.pose.position.x = the_values[0];
 	the_goal.target_pose.pose.position.y = the_values[1];
 
+	ROS_INFO("Goal position: %lf, %lf.", the_values[0], the_values[1]);
+
 	if(cmd_args > 2)
 	{
+		ROS_INFO("Goal heading: %lf.", the_values[2]);
 		the_goal.target_pose.pose.orientation.w = cos(the_values[2]/2);
 		the_goal.target_pose.pose.orientation.z = sin(the_values[2]/2);
 	}
