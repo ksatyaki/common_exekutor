@@ -84,7 +84,7 @@ void AcquireExekutor::actionThread()
 		if(params.size() > 1)
 			message.request.tolerance = std::strtod(params[1].c_str(), NULL);
 		else
-			message.request.tolerance = 0.8;
+			message.request.tolerance = 1.0;
 	}
 
 	else if(params[0].compare("known") == 0)
@@ -94,7 +94,7 @@ void AcquireExekutor::actionThread()
 		if(params.size() > 1)
 			message.request.tolerance = std::strtod(params[1].c_str(), NULL);
 		else
-			message.request.tolerance = 0.8;
+			message.request.tolerance = 1.0;
 	}
 
 
@@ -112,7 +112,7 @@ void AcquireExekutor::actionThread()
 			message.request.tolerance = std::strtod(params[2].c_str(), NULL);
 		}
 		else
-			message.request.tolerance = 0.8;
+			message.request.tolerance = 1.0;
 
 		message.request.type = acquire_tabletop::AcquireTabletopRequest::SIGNATURE;
 
@@ -135,7 +135,7 @@ void AcquireExekutor::actionThread()
 		if(params.size() > 1)
 			message.request.tolerance = std::strtod(params[1].c_str(), NULL);
 		else
-			message.request.tolerance = 0.8;
+			message.request.tolerance = 1.0;
 	}
 
 	ROS_INFO("Calling client...");
