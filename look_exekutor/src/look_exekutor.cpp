@@ -10,8 +10,7 @@
 namespace exekutor {
 
 LookExekutor::LookExekutor (std::string robot_name, std::string action_name) :
-		ActionExekutor (robot_name, action_name),
-		ptu_client_ ("ptu/SetPTUState", true)
+		ActionExekutor (robot_name, action_name)
 {
 	ptu_cmd_pub_ = nh_.advertise<sensor_msgs::JointState>("/ptu/cmd", 1);
 }
@@ -45,55 +44,63 @@ void LookExekutor::actionThread()
 
 	float x__ =  obj_position.point.x + 0.17;
 
-	double reqd_tilt = asin((1.405 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
-	double reqd_pan = atan2(obj_position.point.y, x__);
+	reqd_tilt = asin((1.405 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
+	reqd_pan = atan2(obj_position.point.y, x__);
+
+	if(reqd_tilt >= 0.79)
+	  reqd_tilt = 0.79;
+
+	sensor_msgs::JointState ptu_cmd_msg_;
+	ptu_cmd_msg_.position.push_back(reqd_pan);
+	reqd_tilt = -1*reqd_tilt;
+	ptu_cmd_msg_.position.push_back(reqd_tilt);
+
+	ptu_cmd_msg_.velocity.push_back(0.5);
+	ptu_cmd_msg_.velocity.push_back(0.5);
 
 	ROS_INFO("Required pan = %lf", reqd_pan);
 	ROS_INFO("Required tilt = %lf", reqd_tilt);
 
-	if(reqd_tilt >= 0.84)
-	  reqd_tilt = 0.84;
-
-	/*
- 	ptu_control::PtuGotoGoal ptu_goal;
-	ptu_goal.pan = reqd_pan * 180 / PI;
-	ptu_goal.pan_vel = 0.5 * 180 / PI;
-	ptu_goal.tilt = -1 * reqd_tilt * 180 / PI;
-	ptu_goal.tilt_vel = 0.5 * 180 / PI;
-
-	ptu_client_.waitForServer();
-	ROS_INFO("Found the server. Sending PTU goal.");
-
-	ptu_client_.sendGoal(ptu_goal);
-	ptu_client_.waitForResult(ros::Duration(10.0));
-
-	if(ptu_client_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-	{
-		ROS_INFO("Action succeeded. Bye.");
-		setState(COMPLETED);
-		return;
-	}
-
-	else
-	{
-		ROS_INFO("Look failed. Bye.");
-		setState(FAILED);
-		return;
-	}
-
-	*/
-
-	sensor_msgs::JointState ptu_cmd_msg_;
-	ptu_cmd_msg_.position.push_back(reqd_pan);
-	ptu_cmd_msg_.position.push_back(-1*reqd_tilt);
-
-	ptu_cmd_msg_.velocity.push_back(0.5 * 180 / PI);
-	ptu_cmd_msg_.velocity.push_back(0.5 * 180 / PI);
-
 	ptu_cmd_pub_.publish(ptu_cmd_msg_);
 
-	ROS_INFO("Action succeeded. Bye.");
-	setState(COMPLETED);
+	ptu_js_sub = nh_.subscribe ("ptu/joint_states", 1, &LookExekutor::ptujsCB, this);
+
+	ptu_action_done = false;
+	bool timeout = false;
+	int countdown = 50;
+	ros::Rate spinRate(5);
+	while(!ptu_action_done)
+	{
+	  if(countdown == 0)
+	  {
+	    timeout = true;
+	    break;
+	  }
+	  spinRate.sleep();
+	  ros::spinOnce();
+	  countdown--;
+	}
+
+	if(timeout == true)
+	{
+	  ROS_INFO("Look FAILED.");
+	  setState(FAILED);
+	}
+	else
+	{
+	  ROS_INFO("Action succeeded. Bye.");
+	  setState(COMPLETED);
+	}
+
+	ptu_js_sub.shutdown();
 }
+
+void LookExekutor::ptujsCB(const sensor_msgs::JointState::ConstPtr& _msg)
+{
+  ROS_INFO("PAN: %lf, TILT: %lf", _msg->position[0] - reqd_pan, _msg->position[1] - reqd_tilt);
+  if(fabs(_msg->position[0] - reqd_pan) < 0.01 && fabs(_msg->position[1] - reqd_tilt) < 0.01)
+     ptu_action_done = true;
+}
+
 
 } /* namespace exekutor */

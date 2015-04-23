@@ -18,7 +18,6 @@
 #include <tf/transform_listener.h>
 
 #include <geometry_msgs/PointStamped.h>
-#include <ptu_control/PtuGotoAction.h>
 #include <math.h>
 #include <sensor_msgs/JointState.h>
 
@@ -30,16 +29,20 @@ class LookExekutor: public ActionExekutor
 {
 
 	ros::Publisher ptu_cmd_pub_;
-	/**
-	 * Action client to talk to the ptu action server.
-	 */
-	actionlib::SimpleActionClient <ptu_control::PtuGotoAction> ptu_client_;
+	
+	ros::Subscriber ptu_js_sub;
+
+	void ptujsCB(const sensor_msgs::JointState::ConstPtr& _msg);
 
 	/**
 	 * The implementation of the actionThread() function.
 	 * This creates a client to the Ptu action server.
 	 */
 	void actionThread();
+
+	bool ptu_action_done;
+
+	double reqd_pan, reqd_tilt;
 
 
 public:
