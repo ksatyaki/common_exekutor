@@ -65,12 +65,12 @@ void MoveToExekutor::actionThread()
 	if(params.size() == 1)
 	{
 //		geometry_msgs::PointStamped object_location = cam_interface::getObjectPositionFromCAM(params[0], tf_listener_);
-		geometry_msgs::PointStamped object_location = cam_interface::getObjectReachablePositionFromCAM(params[0], tf_listener_);
-		the_values.push_back(object_location.point.x);
-		the_values.push_back(object_location.point.y);
-		the_values.push_back(object_location.point.z); // This is in fact a heading and not a z co-ordinate.
+	  std::vector <double> object_location = cam_interface::getObjectReachablePositionFromCAM(params[0]);
+		the_values.push_back(object_location[0]);
+		the_values.push_back(object_location[1]);
+		the_values.push_back(object_location[2]); // This is in fact a heading and not a z co-ordinate.
 
-		base_link_target = true;
+		base_link_target = false;
 //		the_values.push_back(1.0);
 //		the_values.push_back(3.14);
 	}
@@ -167,7 +167,7 @@ void MoveToExekutor::actionThread()
 
 	mb_client_.sendGoal(the_goal);
 
-	mb_client_.waitForResult();
+	mb_client_.waitForResult(ros::Duration(20.0));
 
 	if(mb_client_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
 	{
