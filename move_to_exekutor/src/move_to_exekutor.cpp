@@ -62,17 +62,29 @@ void MoveToExekutor::actionThread()
 	std::vector <std::string>  params = extractParamStrings(paramTuple.data);
 	std::vector<double> the_values;
 
-	if(params.size() == 1)
+	if(params.size() == 1 || params.size() == 2)
 	{
-//		geometry_msgs::PointStamped object_location = cam_interface::getObjectPositionFromCAM(params[0], tf_listener_);
-	  std::vector <double> object_location = cam_interface::getObjectReachablePositionFromCAM(params[0]);
-		the_values.push_back(object_location[0]);
-		the_values.push_back(object_location[1]);
-		the_values.push_back(object_location[2]); // This is in fact a heading and not a z co-ordinate.
+		if(params.size() == 2) {
+			if(params[1].compare("forward") == 0 || params[1].compare("backward") == 0) {
+				std::vector <double> object_location = cam_interface::getObjectReachablePositionFromCAM(params[0]);
+				the_values.push_back(object_location[0]);
+				the_values.push_back(object_location[1]);
+				the_values.push_back(object_location[2]); // This is in fact a heading and not a z co-ordinate.
+				base_link_target = false;
 
-		base_link_target = false;
-//		the_values.push_back(1.0);
-//		the_values.push_back(3.14);
+				nh_.setParam("move_base/driving_direction", params[1]);
+				ROS_INFO("DRIVING DIRECTION: %s", params[1].c_str());
+			}
+			else
+				the_values = extractParams(paramTuple.data);
+		}
+		else {
+			std::vector <double> object_location = cam_interface::getObjectReachablePositionFromCAM(params[0]);
+			the_values.push_back(object_location[0]);
+			the_values.push_back(object_location[1]);
+			the_values.push_back(object_location[2]); // This is in fact a heading and not a z co-ordinate.
+			base_link_target = false;
+		}
 	}
 
 	else
@@ -133,7 +145,7 @@ void MoveToExekutor::actionThread()
 	{
 		std::string driving_dir = the_values[5] == -1.0 ? "backward": "forward";
 		ROS_INFO("DRIVING DIRECTION: %s", driving_dir.c_str());
-		nh_.getParam("move_base/driving_direction", driving_dir);
+		nh_.setParam("move_base/driving_direction", driving_dir);
 	}
 
 	if(cmd_args > 6)
@@ -162,12 +174,25 @@ void MoveToExekutor::actionThread()
 		the_goal.target_pose.pose.orientation.z = 0.0;
 	}
 
-	mb_client_.waitForServer();
+	mb_client_.waitForServer(ros::Duration(30.0));
+
+	if(!mb_client_.isServerConnected()) {
+		ROS_INFO("Couldn't find the move_base action server in 30 seconds.");
+		setState(FAILED);
+		setResult("Server not found");
+		nh_.setParam("move_base/yaw_tolerance", old_yaw_tolerance);
+		nh_.setParam("move_base/xy_tolerance_max", old_xy_tolerance_max);
+		nh_.setParam("move_base/xy_tolerance_min", old_xy_tolerance_min);
+		nh_.setParam("move_base/driving_direction", old_driving_direction);
+		
+		return;
+	}
+	
 	ROS_INFO("Sending goal.");
 
 	mb_client_.sendGoal(the_goal);
 
-	mb_client_.waitForResult(ros::Duration(20.0));
+	mb_client_.waitForResult(ros::Duration(30.0));
 
 	if(mb_client_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
 	{
