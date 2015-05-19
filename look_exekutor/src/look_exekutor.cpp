@@ -24,7 +24,14 @@ void LookExekutor::actionThread()
 	PeisTuple paramTuple = getParamTuple();
 	ROS_INFO("LookExekutor has started.");
 
-	geometry_msgs::PointStamped obj_position = cam_interface::getObjectPositionFromCAM(paramTuple.data, this->tf_listener_);
+	bool named_look = false;
+	geometry_msgs::PointStamped obj_position;
+	if(std::string("ahead").compare(paramTuple.data) == 0)
+	{
+	  named_look = true;
+	}
+	else 
+	  obj_position = cam_interface::getObjectPositionFromCAM(paramTuple.data, this->tf_listener_);
 
 	if(obj_position.header.frame_id.compare("para-universe") == 0)
 	{
@@ -44,8 +51,14 @@ void LookExekutor::actionThread()
 
 	float x__ =  obj_position.point.x + 0.17;
 
-	reqd_tilt = asin((1.405 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
-	reqd_pan = atan2(obj_position.point.y, x__);
+	if(named_look) {
+	  reqd_tilt = 0.0;
+	  reqd_pan = 0.0;
+	}
+	else {
+	  reqd_tilt = asin((1.405 - obj_position.point.z)/ sqrt((x__*x__) + (obj_position.point.y*obj_position.point.y)));
+	  reqd_pan = atan2(obj_position.point.y, x__);
+	}
 
 	if(reqd_tilt >= 0.79)
 	  reqd_tilt = 0.79;
